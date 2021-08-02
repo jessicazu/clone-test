@@ -1,8 +1,8 @@
-import NextAuth from "next-auth";
-import Providers from "next-auth/providers";
-import Adapters from "next-auth/adapters";
-import { PrismaClient } from "@prisma/client";
-let prisma;
+import NextAuth from 'next-auth'
+import Providers from 'next-auth/providers'
+import Adapters from 'next-auth/adapters'
+import { PrismaClient } from '@prisma/client'
+let prisma
 // ローカルでは大量にデータベースコネクションを張ってしまうことがあるので、
 // このようなアプローチをとる。TypeScript が global type に prisma がないと怒るので、
 // ルートディレクトリに global.d.ts を作成し、
@@ -16,13 +16,13 @@ let prisma;
 // }
 
 // としてあげれば治る
-if (process.env.NODE_ENV === "production") {
-  prisma = new PrismaClient();
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient()
 } else {
   if (!global.prisma) {
-    global.prisma = new PrismaClient();
+    global.prisma = new PrismaClient()
   }
-  prisma = global.prisma;
+  prisma = global.prisma
 }
 
 const options = {
@@ -40,6 +40,14 @@ const options = {
     // }),
   ],
   adapter: Adapters.Prisma.Adapter({ prisma }),
-};
+  callbacks: {
+    session: async (session, user) => {
+      // sessionのuser.idに、DBのuser.idを追加
+      session.user.id = user.id
 
-export default (req, res) => NextAuth(req, res, options);
+      return Promise.resolve(session)
+    },
+  },
+}
+
+export default (req, res) => NextAuth(req, res, options)
